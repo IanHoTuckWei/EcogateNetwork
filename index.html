@@ -29,32 +29,36 @@
         h1 { font-size: 32px; color: #f8fafc; letter-spacing: -0.5px; }
         h1 span { color: #bef264; }
         
-        .header-actions { display: flex; gap: 15px; align-items: center; }
+        .header-actions { display: flex; gap: 12px; align-items: center; }
         
         .connect-btn {
             background-color: #bef264;
             color: #0f172a;
             border: none;
-            padding: 10px 20px;
+            padding: 10px 18px;
             border-radius: 20px;
             font-weight: 700;
-            font-size: 14px;
+            font-size: 13px;
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 8px;
             transition: opacity 0.2s;
         }
+        .connect-btn.lego-btn {
+            background-color: #38bdf8;
+            color: #0f172a;
+        }
         .connect-btn.connected { background-color: #22c55e; color: #fff; }
         .connect-btn:hover { opacity: 0.9; }
 
-        .network-status { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; background: #1e293b; padding: 8px 16px; border-radius: 20px;}
+        .network-status { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; background: #1e293b; padding: 8px 14px; border-radius: 20px;}
         .dot { width: 10px; height: 10px; background-color: #64748b; border-radius: 50%; display: inline-block; }
         .dot.active { background-color: #22c55e; animation: blink 1.5s infinite; }
 
         .dashboard-grid {
             display: grid;
-            grid-template-columns: 1fr 2fr;
+            grid-template-columns: 1fr 1fr;
             gap: 25px;
         }
 
@@ -137,10 +141,10 @@
         }
         .log-table th, .log-table td {
             text-align: left;
-            padding: 14px;
+            padding: 12px 14px;
             border-bottom: 1px solid #1e293b;
         }
-        .log-table th { color: #64748b; font-size: 13px; text-transform: uppercase; }
+        .log-table th { color: #64748b; font-size: 12px; text-transform: uppercase; }
         .badge {
             padding: 4px 10px;
             border-radius: 12px;
@@ -166,7 +170,10 @@
         <h1>EcoGate<span>.Network</span></h1>
         <div class="header-actions">
             <button id="connectBtn" class="connect-btn" onclick="connectBluetooth()">
-                <i class="fa-solid fa-bluetooth"></i> Connect EcoGate Hardware
+                <i class="fa-solid fa-bluetooth"></i> Connect EcoGate
+            </button>
+            <button id="connectLegoBtn" class="connect-btn lego-btn" onclick="connectLegoHub()">
+                <i class="fa-solid fa-cubes"></i> Connect LEGO Move Hub
             </button>
             <div class="network-status">
                 <span id="statusDot" class="dot"></span> <span id="gatewayText">Hardware Offline</span>
@@ -216,40 +223,75 @@
 
             <div class="card">
                 <h2><i class="fa-solid fa-terminal"></i> Serial Data Stream</h2>
-                <p style="font-size: 12px; color: #94a3b8; font-family: monospace; background: #070a12; padding: 12px; border-radius: 8px; max-height: 100px; overflow-y: auto;" id="debugOut">
-                    [System Status] Click 'Connect EcoGate Hardware' to connect via Bluetooth.
+                <p style="font-size: 12px; color: #94a3b8; font-family: monospace; background: #070a12; padding: 12px; border-radius: 8px; max-height: 90px; overflow-y: auto;" id="debugOut">
+                    [System Status] Click hardware connection buttons above to pair devices.
                 </p>
             </div>
         </div>
 
-        <div class="card">
-            <h2><i class="fa-solid fa-list-timeline"></i> System Logs & Telemetry</h2>
-            <table class="log-table">
-                <thead>
-                    <tr>
-                        <th>Timestamp</th>
-                        <th>Device Node</th>
-                        <th>Event Description</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="logBody">
-                    <tr>
-                        <td>--:--:--</td>
-                        <td>EcoGate_Node_01</td>
-                        <td>Awaiting Bluetooth Connection...</td>
-                        <td><span class="badge neutral">STANDBY</span></td>
-                    </tr>
-                </tbody>
-            </table>
+        <div style="display: flex; flex-direction: column; gap: 25px;">
+            <div class="card">
+                <div class="card-header-row">
+                    <h2><i class="fa-solid fa-id-card-clip"></i> Authorized Entries</h2>
+                    <button class="connect-btn" style="padding: 4px 12px; font-size: 12px;" onclick="simulateAuthorizedEntry('Manual Override Keycard')">
+                        <i class="fa-solid fa-key"></i> Simulate Entry
+                    </button>
+                </div>
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Identity / Node</th>
+                            <th>Access Point</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="authEntryBody">
+                        <tr>
+                            <td>--:--:--</td>
+                            <td>System Access Control</td>
+                            <td>Gate_Node_01</td>
+                            <td><span class="badge neutral">AWAITING ENTRY</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h2><i class="fa-solid fa-list-timeline"></i> System Logs & Telemetry</h2>
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Device Node</th>
+                            <th>Event Description</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logBody">
+                        <tr>
+                            <td>--:--:--</td>
+                            <td>EcoGate_Node_01</td>
+                            <td>Awaiting Hardware Connection...</td>
+                            <td><span class="badge neutral">STANDBY</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </main>
 
     <script>
+        // ESP32 UART GATT UUIDs
         const UART_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
         const TX_CHARACTERISTIC_UUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
 
+        // Official LEGO Wireless Protocol UUIDs
+        const LEGO_HUB_SERVICE_UUID = '00001623-1212-efde-1623-785feabcd123';
+        const LEGO_HUB_CHAR_UUID    = '00001624-1212-efde-1623-785feabcd123';
+
         let bluetoothDevice = null;
+        let legoDevice = null;
         let inputBuffer = ""; 
         let securityState = "SECURE";
         let smokeState = "CLEAN";
@@ -259,7 +301,6 @@
         let alarmInterval = null;
 
         function updateAlarmState() {
-            // Sound the alarm if either system is currently alerting
             if (securityState === "BREACH" || smokeState === "FIRE") {
                 startAlarmSound();
             } else {
@@ -300,6 +341,7 @@
             }
         }
 
+        // --- CONNECT ESP32 ---
         async function connectBluetooth() {
             const connectBtn = document.getElementById('connectBtn');
             const statusDot = document.getElementById('statusDot');
@@ -323,7 +365,7 @@
                 characteristic.addEventListener('characteristicvaluechanged', handleIncomingData);
 
                 connectBtn.className = "connect-btn connected";
-                connectBtn.innerHTML = `<i class="fa-solid fa-circle-check"></i> Paired with EcoGate`;
+                connectBtn.innerHTML = `<i class="fa-solid fa-circle-check"></i> EcoGate Paired`;
                 statusDot.className = "dot active";
                 gatewayText.innerText = "IoT Gateway: Online";
                 
@@ -334,6 +376,51 @@
                 gatewayText.innerText = "Connection Failed";
                 statusDot.className = "dot";
                 document.getElementById('debugOut').innerText = `[Error]: ${error.message || error}`;
+            }
+        }
+
+        // --- CONNECT LEGO MOVE HUB (STRICTLY LEGO ONLY) ---
+        async function connectLegoHub() {
+            const connectLegoBtn = document.getElementById('connectLegoBtn');
+
+            try {
+                document.getElementById('debugOut').innerText = "[LEGO]: Scanning strictly for LEGO Move Hub...";
+                
+                // Filter strictly by the official LEGO Wireless Protocol UUID
+                legoDevice = await navigator.bluetooth.requestDevice({
+                    filters: [
+                        { services: [LEGO_HUB_SERVICE_UUID] }
+                    ]
+                });
+
+                document.getElementById('debugOut').innerText = `[LEGO]: Connecting to ${legoDevice.name || 'LEGO Move Hub'}...`;
+
+                const server = await legoDevice.gatt.connect();
+                const service = await server.getPrimaryService(LEGO_HUB_SERVICE_UUID);
+                const characteristic = await service.getCharacteristic(LEGO_HUB_CHAR_UUID);
+
+                await characteristic.startNotifications();
+                characteristic.addEventListener('characteristicvaluechanged', handleLegoHubData);
+
+                connectLegoBtn.className = "connect-btn connected";
+                connectLegoBtn.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${legoDevice.name || 'Move Hub'} Paired`;
+
+                logEvent(`LEGO Move Hub Connected`, "HUB ONLINE", "allowed");
+                recordAuthorizedEntry(`${legoDevice.name || 'LEGO Move Hub'} (Control Node)`);
+
+            } catch (error) {
+                console.error("LEGO Move Hub Error:", error);
+                document.getElementById('debugOut').innerText = `[LEGO Error]: ${error.message || error}`;
+            }
+        }
+
+        function handleLegoHubData(event) {
+            let data = new Uint8Array(event.target.value.buffer);
+            document.getElementById('debugOut').innerText = `[LEGO Telemetry]: Bytes Received (${data.length})`;
+
+            // Detect button press or port events from Move Hub
+            if (data.length >= 5 && data[2] === 0x01) { 
+                recordAuthorizedEntry("LEGO Hub Button Trigger");
             }
         }
 
@@ -386,7 +473,6 @@
             } 
             // 2. Process Smoke & Fire Detection
             else if (lowerCmd.includes("fire detected")) {
-                // Trigger alert if not already acknowledged or resolving
                 if (smokeState !== "DETERMINING") {
                     smokeState = "FIRE";
                     smokeBox.className = "status-box smoke-alert";
@@ -402,14 +488,17 @@
                 }
             } 
             else if (lowerCmd.includes("no fire")) {
-                // Auto restore clean state if not in manual acknowledgment flow
                 if (smokeState === "CLEAN") {
                     smokeBox.className = "status-box smoke-clear";
                     smokeText.innerText = "CLEAN AIR";
                     smokeText.style.color = "#22c55e";
                 }
             }
-            // 3. Process Temperature Updates ("temp:24.5")
+            // 3. Process Authorized Entry Signals via Serial/Bluetooth
+            else if (lowerCmd.includes("authorized_entry") || lowerCmd.includes("access_granted")) {
+                recordAuthorizedEntry("RFID / Smart Credential");
+            }
+            // 4. Process Temperature Updates ("temp:24.5")
             else if (lowerCmd.startsWith("temp:")) {
                 let parts = command.split(":");
                 if (parts.length > 1) {
@@ -425,7 +514,31 @@
             }
         }
 
-        // Action handler for Security Breach Card
+        // Handles recording authorized entries in the dedicated table
+        function recordAuthorizedEntry(identityName) {
+            const authBody = document.getElementById('authEntryBody');
+            const now = new Date().toLocaleTimeString();
+            let newRow = document.createElement('tr');
+
+            if (authBody.rows.length === 1 && authBody.rows[0].cells[3].innerText.includes("AWAITING")) {
+                authBody.innerHTML = "";
+            }
+
+            newRow.innerHTML = `
+                <td>${now}</td>
+                <td><strong>${identityName}</strong></td>
+                <td>EcoGate_Node_01</td>
+                <td><span class="badge allowed">GRANTED</span></td>
+            `;
+            authBody.insertBefore(newRow, authBody.firstChild);
+
+            logEvent(`Access Granted to ${identityName}`, "AUTHORIZED", "allowed");
+        }
+
+        function simulateAuthorizedEntry(identity) {
+            recordAuthorizedEntry(identity || "Authorized Operator");
+        }
+
         function handleSecurityAction() {
             const statusBox = document.getElementById('statusBox');
             const statusText = document.getElementById('statusText');
@@ -459,7 +572,6 @@
             }
         }
 
-        // Action handler for Smoke & Possible Fire Card
         function handleSmokeAction() {
             const smokeBox = document.getElementById('smokeBox');
             const smokeText = document.getElementById('smokeText');
