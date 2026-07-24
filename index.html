@@ -29,8 +29,14 @@
         h1 { font-size: 32px; color: #f8fafc; letter-spacing: -0.5px; }
         h1 span { color: #bef264; }
         
-        .header-actions { display: flex; gap: 12px; align-items: center; }
+        .header-actions { display: flex; gap: 16px; align-items: flex-start; }
         
+        .connect-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
         .connect-btn {
             background-color: #bef264;
             color: #0f172a;
@@ -44,6 +50,8 @@
             align-items: center;
             gap: 8px;
             transition: opacity 0.2s;
+            width: 100%;
+            justify-content: center;
         }
         .connect-btn.lego-btn {
             background-color: #38bdf8;
@@ -52,7 +60,25 @@
         .connect-btn.connected { background-color: #22c55e; color: #fff; }
         .connect-btn:hover { opacity: 0.9; }
 
-        .network-status { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; background: #1e293b; padding: 8px 14px; border-radius: 20px;}
+        .btn-subtext {
+            font-size: 10px;
+            color: #64748b;
+            margin-top: 6px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .network-status { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            font-weight: 600; 
+            font-size: 13px; 
+            background: #1e293b; 
+            padding: 8px 14px; 
+            border-radius: 20px;
+            margin-top: 2px;
+        }
         .dot { width: 10px; height: 10px; background-color: #64748b; border-radius: 50%; display: inline-block; }
         .dot.active { background-color: #22c55e; animation: blink 1.5s infinite; }
 
@@ -157,6 +183,13 @@
         .badge.info { background-color: rgba(56, 189, 248, 0.2); color: #38bdf8; }
         .badge.warning { background-color: rgba(249, 115, 22, 0.2); color: #fb923c; }
 
+        .attempts-sub {
+            display: block;
+            font-size: 10px;
+            color: #94a3b8;
+            margin-top: 3px;
+        }
+
         @keyframes blink {
             0% { opacity: 0.4; }
             50% { opacity: 1; }
@@ -169,12 +202,18 @@
     <header>
         <h1>EcoGate<span>.Network</span></h1>
         <div class="header-actions">
-            <button id="connectBtn" class="connect-btn" onclick="connectBluetooth()">
-                <i class="fa-solid fa-bluetooth"></i> Connect EcoGate
-            </button>
-            <button id="connectLegoBtn" class="connect-btn lego-btn" onclick="connectLegoHub()">
-                <i class="fa-solid fa-cubes"></i> Connect LEGO Move Hub
-            </button>
+            <div class="connect-container">
+                <button id="connectBtn" class="connect-btn" onclick="connectBluetooth()">
+                    <i class="fa-solid fa-bluetooth"></i> Connect EcoGate
+                </button>
+                <span class="btn-subtext">ESP32 Main Controller</span>
+            </div>
+            <div class="connect-container">
+                <button id="connectLegoBtn" class="connect-btn lego-btn" onclick="connectLegoHub()">
+                    <i class="fa-solid fa-cubes"></i> Connect Gate
+                </button>
+                <span class="btn-subtext">Look for Pybricks Move Hub</span>
+            </div>
             <div class="network-status">
                 <span id="statusDot" class="dot"></span> <span id="gatewayText">Hardware Offline</span>
             </div>
@@ -197,8 +236,13 @@
             </div>
 
             <div class="card">
-                <h2><i class="fa-solid fa-temperature-half"></i> Ambient Temperature</h2>
-                <div class="status-box temp">
+                <div class="card-header-row">
+                    <h2><i class="fa-solid fa-temperature-half"></i> Ambient Temperature</h2>
+                    <button id="tempActionBtn" class="action-btn" onclick="handleTempAction()">
+                        <i class="fa-solid fa-check"></i> <span id="tempBtnText">Noted</span>
+                    </button>
+                </div>
+                <div id="tempBox" class="status-box temp">
                     <p style="font-size: 13px; text-transform: uppercase; color: #64748b;">MPU6050 Sensor Telemetry</p>
                     <div id="tempText" class="status-text" style="color: #38bdf8;">--.- °C</div>
                 </div>
@@ -210,7 +254,7 @@
 
             <div class="card">
                 <div class="card-header-row">
-                    <h2><i class="fa-solid fa-smog"></i> Smoke and Possible Fire Detector</h2>
+                    <h2><i class="fa-solid fa-smog"></i> Smoke and Fire Detector</h2>
                     <button id="smokeActionBtn" class="action-btn" onclick="handleSmokeAction()">
                         <i class="fa-solid fa-check"></i> <span id="smokeBtnText">Noted</span>
                     </button>
@@ -218,6 +262,32 @@
                 <div id="smokeBox" class="status-box smoke-clear">
                     <p style="font-size: 13px; text-transform: uppercase; color: #64748b;">Air Quality Status</p>
                     <div id="smokeText" class="status-text" style="color: #22c55e;">CLEAN AIR</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header-row">
+                    <h2><i class="fa-solid fa-wave-square"></i> Transient Impulse Monitor</h2>
+                    <button id="impulseActionBtn" class="action-btn" onclick="handleImpulseAction()">
+                        <i class="fa-solid fa-check"></i> <span id="impulseBtnText">Noted</span>
+                    </button>
+                </div>
+                <div id="impulseBox" class="status-box secure">
+                    <p style="font-size: 13px; text-transform: uppercase; color: #64748b;">MAX4466 Amplitude Peak</p>
+                    <div id="impulseText" class="status-text" style="color: #22c55e;">AMBIENT NORMAL</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header-row">
+                    <h2><i class="fa-solid fa-industry"></i> Sustained Machinery Drone</h2>
+                    <button id="droneActionBtn" class="action-btn" onclick="handleDroneAction()">
+                        <i class="fa-solid fa-check"></i> <span id="droneBtnText">Noted</span>
+                    </button>
+                </div>
+                <div id="droneBox" class="status-box secure">
+                    <p style="font-size: 13px; text-transform: uppercase; color: #64748b;">FFT Spectrum Analysis (100-500Hz)</p>
+                    <div id="droneText" class="status-text" style="color: #22c55e;">NO DRONE DETECTED</div>
                 </div>
             </div>
 
@@ -233,9 +303,17 @@
             <div class="card">
                 <div class="card-header-row">
                     <h2><i class="fa-solid fa-id-card-clip"></i> Authorized Entries</h2>
-                    <button class="connect-btn" style="padding: 4px 12px; font-size: 12px;" onclick="simulateAuthorizedEntry('Manual Override Keycard')">
-                        <i class="fa-solid fa-key"></i> Simulate Entry
-                    </button>
+                    <div style="display: flex; gap: 6px;">
+                        <button class="connect-btn" style="padding: 4px 10px; font-size: 11px; width: auto;" onclick="handleGateProximityTrigger()">
+                            <i class="fa-solid fa-person-walking"></i> Test Presence
+                        </button>
+                        <button class="connect-btn" style="padding: 4px 10px; font-size: 11px; width: auto; background-color: #ef4444; color: #fff;" onclick="handleGateColorCheck(false)">
+                            <i class="fa-solid fa-xmark"></i> Test Fail
+                        </button>
+                        <button class="connect-btn" style="padding: 4px 10px; font-size: 11px; width: auto; background-color: #22c55e; color: #fff;" onclick="handleGateColorCheck(true)">
+                            <i class="fa-solid fa-check"></i> Test Pass
+                        </button>
+                    </div>
                 </div>
                 <table class="log-table">
                     <thead>
@@ -286,22 +364,31 @@
         const UART_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
         const TX_CHARACTERISTIC_UUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
 
-        // Official LEGO Wireless Protocol UUIDs
-        const LEGO_HUB_SERVICE_UUID = '00001623-1212-efde-1623-785feabcd123';
-        const LEGO_HUB_CHAR_UUID    = '00001624-1212-efde-1623-785feabcd123';
+        // Pybricks Nordic UART Service (NUS) UUIDs
+        const PYBRICKS_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+        const PYBRICKS_TX_CHAR_UUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
 
         let bluetoothDevice = null;
         let legoDevice = null;
         let inputBuffer = ""; 
+        let pybricksBuffer = "";
+
         let securityState = "SECURE";
+        let tempState = "NORMAL";
         let smokeState = "CLEAN";
+        let impulseState = "NORMAL";
+        let droneState = "NORMAL";
         
+        // Gate Entry Tracking Logic
+        let gateFailedAttempts = 0;
+        let activeGateEntryRow = null;
+
         // --- WEB AUDIO ALARM SYSTEM ---
         let audioCtx = null;
         let alarmInterval = null;
 
         function updateAlarmState() {
-            if (securityState === "BREACH" || smokeState === "FIRE") {
+            if (securityState === "BREACH" || smokeState === "FIRE" || impulseState === "ALERT" || droneState === "ALERT" || tempState === "ALERT") {
                 startAlarmSound();
             } else {
                 stopAlarmSound();
@@ -379,48 +466,130 @@
             }
         }
 
-        // --- CONNECT LEGO MOVE HUB (STRICTLY LEGO ONLY) ---
+        // --- CONNECT PYBRICKS MOVE HUB (SHOW ALL DEVICES) ---
         async function connectLegoHub() {
             const connectLegoBtn = document.getElementById('connectLegoBtn');
 
             try {
-                document.getElementById('debugOut').innerText = "[LEGO]: Scanning strictly for LEGO Move Hub...";
+                document.getElementById('debugOut').innerText = "[Pybricks]: Scanning for all nearby Bluetooth devices...";
                 
-                // Filter strictly by the official LEGO Wireless Protocol UUID
+                // acceptAllDevices: true allows any nearby advertising Bluetooth device to show in the selector
                 legoDevice = await navigator.bluetooth.requestDevice({
-                    filters: [
-                        { services: [LEGO_HUB_SERVICE_UUID] }
-                    ]
+                    acceptAllDevices: true,
+                    optionalServices: [PYBRICKS_SERVICE_UUID]
                 });
 
-                document.getElementById('debugOut').innerText = `[LEGO]: Connecting to ${legoDevice.name || 'LEGO Move Hub'}...`;
+                document.getElementById('debugOut').innerText = `[Pybricks]: Connecting to ${legoDevice.name || 'Move Hub'}...`;
 
                 const server = await legoDevice.gatt.connect();
-                const service = await server.getPrimaryService(LEGO_HUB_SERVICE_UUID);
-                const characteristic = await service.getCharacteristic(LEGO_HUB_CHAR_UUID);
+                const service = await server.getPrimaryService(PYBRICKS_SERVICE_UUID);
+                const characteristic = await service.getCharacteristic(PYBRICKS_TX_CHAR_UUID);
 
                 await characteristic.startNotifications();
-                characteristic.addEventListener('characteristicvaluechanged', handleLegoHubData);
+                characteristic.addEventListener('characteristicvaluechanged', handlePybricksData);
 
                 connectLegoBtn.className = "connect-btn connected";
-                connectLegoBtn.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${legoDevice.name || 'Move Hub'} Paired`;
+                connectLegoBtn.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${legoDevice.name || 'Move Hub'} Connected`;
 
-                logEvent(`LEGO Move Hub Connected`, "HUB ONLINE", "allowed");
-                recordAuthorizedEntry(`${legoDevice.name || 'LEGO Move Hub'} (Control Node)`);
+                logEvent(`Pybricks Hub Connected: ${legoDevice.name || 'Move Hub'}`, "HUB ONLINE", "allowed");
 
             } catch (error) {
-                console.error("LEGO Move Hub Error:", error);
-                document.getElementById('debugOut').innerText = `[LEGO Error]: ${error.message || error}`;
+                console.error("Pybricks Hub Error:", error);
+                document.getElementById('debugOut').innerText = `[Pybricks Error]: ${error.message || error}`;
             }
         }
 
-        function handleLegoHubData(event) {
-            let data = new Uint8Array(event.target.value.buffer);
-            document.getElementById('debugOut').innerText = `[LEGO Telemetry]: Bytes Received (${data.length})`;
+        // --- PARSE INCOMING DATA FROM PYBRICKS PYTHON PRINTS ---
+        function handlePybricksData(event) {
+            const value = event.target.value;
+            const decoder = new TextDecoder('utf-8');
+            const chunk = decoder.decode(value);
 
-            // Detect button press or port events from Move Hub
-            if (data.length >= 5 && data[2] === 0x01) { 
-                recordAuthorizedEntry("LEGO Hub Button Trigger");
+            pybricksBuffer += chunk;
+
+            // Process line-by-line upon detecting newline or carriage return
+            while (pybricksBuffer.includes('\n') || pybricksBuffer.includes('\r')) {
+                let breakIdx = pybricksBuffer.search(/[\r\n]/);
+                let rawLine = pybricksBuffer.substring(0, breakIdx);
+                pybricksBuffer = pybricksBuffer.substring(breakIdx + 1);
+
+                // Strip hidden \r carriage returns and trailing whitespace
+                let cleanLine = rawLine.replace(/\r/g, '').trim();
+                if (cleanLine.length > 0) {
+                    processPybricksLine(cleanLine);
+                }
+            }
+        }
+
+        function processPybricksLine(line) {
+            console.log("[Pybricks Received]:", line);
+            document.getElementById('debugOut').innerText = `[MoveHub Stream]: "${line}"`;
+
+            // Route exact commands to dashboard update handlers
+            if (line === "someone_at_gate") {
+                handleGateProximityTrigger();
+            } 
+            else if (line === "color:green") {
+                handleGateColorCheck(true);
+            } 
+            else if (line === "color:fail") {
+                handleGateColorCheck(false);
+            }
+        }
+
+        // --- GATE SENSOR LOGIC ---
+        function handleGateProximityTrigger() {
+            gateFailedAttempts = 0; // Reset counter for new entrant
+            const authBody = document.getElementById('authEntryBody');
+            const now = new Date().toLocaleTimeString();
+
+            if (authBody.rows.length === 1 && authBody.rows[0].cells[3].innerText.includes("AWAITING")) {
+                authBody.innerHTML = "";
+            }
+
+            activeGateEntryRow = document.createElement('tr');
+            activeGateEntryRow.innerHTML = `
+                <td>${now}</td>
+                <td><strong>Someone at gate</strong></td>
+                <td>Gate_Node_01</td>
+                <td><span class="badge info">AWAITING CREDENTIAL</span></td>
+            `;
+            authBody.insertBefore(activeGateEntryRow, authBody.firstChild);
+
+            logEvent("Distance sensor triggered: Someone detected at gate", "PROXIMITY ALERT", "info");
+        }
+
+        function handleGateColorCheck(isGreen) {
+            const authBody = document.getElementById('authEntryBody');
+
+            if (!activeGateEntryRow) {
+                handleGateProximityTrigger();
+            }
+
+            if (isGreen) {
+                const totalAttempts = gateFailedAttempts + 1;
+                
+                activeGateEntryRow.cells[1].innerHTML = `<strong>Entry Authorised</strong>`;
+                activeGateEntryRow.cells[3].innerHTML = `
+                    <span class="badge allowed">GRANTED</span>
+                    <span class="attempts-sub">Total Attempts: ${totalAttempts}</span>
+                `;
+
+                logEvent(`Gate credential verified (Green detected). Granted in ${totalAttempts} attempt(s).`, "ACCESS GRANTED", "allowed");
+                
+                activeGateEntryRow = null;
+                gateFailedAttempts = 0;
+
+            } else {
+                gateFailedAttempts++;
+
+                activeGateEntryRow.cells[1].innerHTML = `<strong>Someone at gate</strong>`;
+                activeGateEntryRow.cells[3].innerHTML = `
+                    <span class="badge warning">ATTEMPT FAILED (${gateFailedAttempts})</span>
+                    <span class="attempts-sub">Failed Attempts: ${gateFailedAttempts}</span>
+                `;
+
+                logEvent(`Gate color check failed (Attempt #${gateFailedAttempts})`, "INVALID COLOR", "warning");
             }
         }
 
@@ -437,7 +606,7 @@
                 let rawCommand = inputBuffer.substring(0, breakIdx);
                 inputBuffer = inputBuffer.substring(breakIdx + 1);
                 
-                let cleanCommand = rawCommand.trim();
+                let cleanCommand = rawCommand.replace(/\r/g, '').trim();
                 if (cleanCommand.length > 0) {
                     processHardwareCommand(cleanCommand);
                 }
@@ -448,16 +617,29 @@
             const lowerCmd = command.toLowerCase();
             const statusBox = document.getElementById('statusBox');
             const statusText = document.getElementById('statusText');
-            const smokeBox = document.getElementById('smokeBox');
-            const smokeText = document.getElementById('smokeText');
-            const tempText = document.getElementById('tempText');
-            
             const securityActionBtn = document.getElementById('securityActionBtn');
             const securityBtnText = document.getElementById('securityBtnText');
+
+            const smokeBox = document.getElementById('smokeBox');
+            const smokeText = document.getElementById('smokeText');
             const smokeActionBtn = document.getElementById('smokeActionBtn');
             const smokeBtnText = document.getElementById('smokeBtnText');
 
-            // 1. Process Physical Breach Alert
+            const tempBox = document.getElementById('tempBox');
+            const tempText = document.getElementById('tempText');
+            const tempActionBtn = document.getElementById('tempActionBtn');
+            const tempBtnText = document.getElementById('tempBtnText');
+
+            const impulseBox = document.getElementById('impulseBox');
+            const impulseText = document.getElementById('impulseText');
+            const impulseActionBtn = document.getElementById('impulseActionBtn');
+            const impulseBtnText = document.getElementById('impulseBtnText');
+
+            const droneBox = document.getElementById('droneBox');
+            const droneText = document.getElementById('droneText');
+            const droneActionBtn = document.getElementById('droneActionBtn');
+            const droneBtnText = document.getElementById('droneBtnText');
+
             if (lowerCmd.includes("breach attempted")) {
                 securityState = "BREACH";
                 statusBox.className = "status-box breach";
@@ -467,11 +649,31 @@
                 securityActionBtn.className = "action-btn";
                 securityBtnText.innerText = "Noted";
                 securityActionBtn.style.display = "flex";
-
                 updateAlarmState();
                 logEvent("Physical Impact Detected on MPU6050", "BREACH ALERT", "denied");
             } 
-            // 2. Process Smoke & Fire Detection
+            else if (lowerCmd.startsWith("temp:")) {
+                let parts = command.split(":");
+                if (parts.length > 1) {
+                    let val = parseFloat(parts[1]);
+                    tempText.innerText = `${val.toFixed(1)} °C`;
+
+                    let thresholdVal = parseFloat(document.getElementById('tempThreshold').value);
+                    if (!isNaN(thresholdVal) && val > thresholdVal) {
+                        if (tempState !== "DETERMINING") {
+                            tempState = "ALERT";
+                            tempBox.className = "status-box breach";
+                            tempText.style.color = "#ef4444";
+                            
+                            tempActionBtn.className = "action-btn";
+                            tempBtnText.innerText = "Noted";
+                            tempActionBtn.style.display = "flex";
+                            updateAlarmState();
+                            logEvent(`High Temp Alert: ${val.toFixed(1)} °C (Threshold: ${thresholdVal} °C)`, "TEMP ALERT", "warning");
+                        }
+                    }
+                }
+            }
             else if (lowerCmd.includes("fire detected")) {
                 if (smokeState !== "DETERMINING") {
                     smokeState = "FIRE";
@@ -482,61 +684,41 @@
                     smokeActionBtn.className = "action-btn";
                     smokeBtnText.innerText = "Noted";
                     smokeActionBtn.style.display = "flex";
-
                     updateAlarmState();
                     logEvent("MQ-2 Sensor Detected Smoke/Fire Alert!", "POSSIBLE FIRE", "denied");
                 }
             } 
-            else if (lowerCmd.includes("no fire")) {
-                if (smokeState === "CLEAN") {
-                    smokeBox.className = "status-box smoke-clear";
-                    smokeText.innerText = "CLEAN AIR";
-                    smokeText.style.color = "#22c55e";
+            else if (lowerCmd.includes("[event alert]") || lowerCmd.includes("transient impulse")) {
+                if (impulseState !== "DETERMINING") {
+                    impulseState = "ALERT";
+                    impulseBox.className = "status-box breach";
+                    impulseText.innerText = "⚡ HIGH TRANSIENT IMPULSE";
+                    impulseText.style.color = "#ef4444";
+
+                    impulseActionBtn.className = "action-btn";
+                    impulseBtnText.innerText = "Noted";
+                    impulseActionBtn.style.display = "flex";
+                    updateAlarmState();
+                    logEvent("MAX4466 High-Energy Transient Noise Detected", "IMPULSE", "warning");
                 }
             }
-            // 3. Process Authorized Entry Signals via Serial/Bluetooth
+            else if (lowerCmd.includes("[tracker warning]") || lowerCmd.includes("sustained harmonic")) {
+                if (droneState !== "DETERMINING") {
+                    droneState = "ALERT";
+                    droneBox.className = "status-box breach";
+                    droneText.innerText = "⚙️ DRONE DETECTED";
+                    droneText.style.color = "#f97316";
+
+                    droneActionBtn.className = "action-btn";
+                    droneBtnText.innerText = "Noted";
+                    droneActionBtn.style.display = "flex";
+                    updateAlarmState();
+                    logEvent("Sustained Low-Frequency Machinery Tone (100-500Hz)", "DRONE ALERT", "warning");
+                }
+            }
             else if (lowerCmd.includes("authorized_entry") || lowerCmd.includes("access_granted")) {
-                recordAuthorizedEntry("RFID / Smart Credential");
+                handleGateColorCheck(true);
             }
-            // 4. Process Temperature Updates ("temp:24.5")
-            else if (lowerCmd.startsWith("temp:")) {
-                let parts = command.split(":");
-                if (parts.length > 1) {
-                    let val = parseFloat(parts[1]);
-                    
-                    tempText.innerText = `${val.toFixed(1)} °C`;
-
-                    let thresholdVal = parseFloat(document.getElementById('tempThreshold').value);
-                    if (!isNaN(thresholdVal) && val > thresholdVal) {
-                        logEvent(`High Temp Alert: ${val.toFixed(1)} °C (Threshold: ${thresholdVal} °C)`, "TEMP ALERT", "warning");
-                    }
-                }
-            }
-        }
-
-        // Handles recording authorized entries in the dedicated table
-        function recordAuthorizedEntry(identityName) {
-            const authBody = document.getElementById('authEntryBody');
-            const now = new Date().toLocaleTimeString();
-            let newRow = document.createElement('tr');
-
-            if (authBody.rows.length === 1 && authBody.rows[0].cells[3].innerText.includes("AWAITING")) {
-                authBody.innerHTML = "";
-            }
-
-            newRow.innerHTML = `
-                <td>${now}</td>
-                <td><strong>${identityName}</strong></td>
-                <td>EcoGate_Node_01</td>
-                <td><span class="badge allowed">GRANTED</span></td>
-            `;
-            authBody.insertBefore(newRow, authBody.firstChild);
-
-            logEvent(`Access Granted to ${identityName}`, "AUTHORIZED", "allowed");
-        }
-
-        function simulateAuthorizedEntry(identity) {
-            recordAuthorizedEntry(identity || "Authorized Operator");
         }
 
         function handleSecurityAction() {
@@ -554,9 +736,7 @@
                 statusText.style.color = "#f59e0b";
 
                 securityActionBtn.className = "action-btn dealt";
-                securityBtnText.innerText = "Dealt with";
-
-                logEvent("Breach acknowledged. Security state: Determining", "IN PROGRESS", "info");
+                securityBtnText.innerText = "Dealt With";
 
             } else if (securityState === "DETERMINING") {
                 securityState = "SECURE";
@@ -567,8 +747,35 @@
                 statusText.style.color = "#22c55e";
 
                 securityActionBtn.style.display = "none";
-
                 logEvent("Security incident resolved. System re-armed.", "RESOLVED", "allowed");
+            }
+        }
+
+        function handleTempAction() {
+            const tempBox = document.getElementById('tempBox');
+            const tempText = document.getElementById('tempText');
+            const tempActionBtn = document.getElementById('tempActionBtn');
+            const tempBtnText = document.getElementById('tempBtnText');
+
+            if (tempState === "ALERT") {
+                tempState = "DETERMINING";
+                updateAlarmState();
+
+                tempBox.className = "status-box determining";
+                tempText.style.color = "#f59e0b";
+
+                tempActionBtn.className = "action-btn dealt";
+                tempBtnText.innerText = "Dealt With";
+
+            } else if (tempState === "DETERMINING") {
+                tempState = "NORMAL";
+                updateAlarmState();
+
+                tempBox.className = "status-box temp";
+                tempText.style.color = "#38bdf8";
+
+                tempActionBtn.style.display = "none";
+                logEvent("Temperature alert acknowledged and resolved.", "RESOLVED", "allowed");
             }
         }
 
@@ -587,9 +794,7 @@
                 smokeText.style.color = "#f59e0b";
 
                 smokeActionBtn.className = "action-btn dealt";
-                smokeBtnText.innerText = "Dealt with";
-
-                logEvent("Smoke/Fire alert acknowledged. State: Determining", "IN PROGRESS", "info");
+                smokeBtnText.innerText = "Dealt With";
 
             } else if (smokeState === "DETERMINING") {
                 smokeState = "CLEAN";
@@ -600,8 +805,67 @@
                 smokeText.style.color = "#22c55e";
 
                 smokeActionBtn.style.display = "none";
-
                 logEvent("Smoke hazard resolved. Monitoring restored.", "RESOLVED", "allowed");
+            }
+        }
+
+        function handleImpulseAction() {
+            const impulseBox = document.getElementById('impulseBox');
+            const impulseText = document.getElementById('impulseText');
+            const impulseActionBtn = document.getElementById('impulseActionBtn');
+            const impulseBtnText = document.getElementById('impulseBtnText');
+
+            if (impulseState === "ALERT") {
+                impulseState = "DETERMINING";
+                updateAlarmState();
+
+                impulseBox.className = "status-box determining";
+                impulseText.innerText = "🔍 DETERMINING";
+                impulseText.style.color = "#f59e0b";
+
+                impulseActionBtn.className = "action-btn dealt";
+                impulseBtnText.innerText = "Dealt With";
+
+            } else if (impulseState === "DETERMINING") {
+                impulseState = "NORMAL";
+                updateAlarmState();
+
+                impulseBox.className = "status-box secure";
+                impulseText.innerText = "AMBIENT NORMAL";
+                impulseText.style.color = "#22c55e";
+
+                impulseActionBtn.style.display = "none";
+                logEvent("Transient Impulse Alert Acknowledged", "RESOLVED", "allowed");
+            }
+        }
+
+        function handleDroneAction() {
+            const droneBox = document.getElementById('droneBox');
+            const droneText = document.getElementById('droneText');
+            const droneActionBtn = document.getElementById('droneActionBtn');
+            const droneBtnText = document.getElementById('droneBtnText');
+
+            if (droneState === "ALERT") {
+                droneState = "DETERMINING";
+                updateAlarmState();
+
+                droneBox.className = "status-box determining";
+                droneText.innerText = "🔍 DETERMINING";
+                droneText.style.color = "#f59e0b";
+
+                droneActionBtn.className = "action-btn dealt";
+                droneBtnText.innerText = "Dealt With";
+
+            } else if (droneState === "DETERMINING") {
+                droneState = "NORMAL";
+                updateAlarmState();
+
+                droneBox.className = "status-box secure";
+                droneText.innerText = "NO DRONE DETECTED";
+                droneText.style.color = "#22c55e";
+
+                droneActionBtn.style.display = "none";
+                logEvent("Machinery Drone Alert Cleared", "RESOLVED", "allowed");
             }
         }
 
