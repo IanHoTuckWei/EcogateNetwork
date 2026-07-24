@@ -65,7 +65,31 @@
             padding: 25px;
         }
 
-        h2 { font-size: 18px; margin-bottom: 20px; color: #94a3b8; display: flex; align-items: center; gap: 10px; }
+        .card-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        h2 { font-size: 18px; color: #94a3b8; display: flex; align-items: center; gap: 10px; }
+
+        .action-btn {
+            background-color: #ef4444;
+            color: #ffffff;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            transition: background-color 0.2s;
+        }
+        .action-btn.dealt { background-color: #f59e0b; color: #000; }
+        .action-btn:hover { opacity: 0.9; }
 
         .status-box {
             background-color: #1e293b;
@@ -77,9 +101,35 @@
         }
         .status-box.secure { border-left: 6px solid #22c55e; }
         .status-box.breach { border-left: 6px solid #ef4444; background-color: rgba(239, 68, 68, 0.1); }
+        .status-box.determining { border-left: 6px solid #f59e0b; background-color: rgba(245, 158, 11, 0.1); }
         .status-box.temp { border-left: 6px solid #38bdf8; background-color: rgba(56, 189, 248, 0.05); }
+        .status-box.smoke-clear { border-left: 6px solid #22c55e; background-color: rgba(34, 197, 94, 0.05); }
+        .status-box.smoke-alert { border-left: 6px solid #f97316; background-color: rgba(249, 115, 22, 0.15); }
 
         .status-text { font-size: 28px; font-weight: 700; margin-top: 10px; }
+
+        .threshold-control {
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #070a12;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #1e293b;
+        }
+        .threshold-control label { font-size: 13px; color: #94a3b8; font-weight: 600; }
+        .threshold-control input {
+            width: 70px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #38bdf8;
+            padding: 5px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+            text-align: center;
+            font-family: inherit;
+        }
 
         .log-table {
             width: 100%;
@@ -101,6 +151,7 @@
         .badge.denied { background-color: rgba(239, 68, 68, 0.2); color: #f87171; }
         .badge.neutral { background-color: rgba(148, 163, 184, 0.2); color: #cbd5e1; }
         .badge.info { background-color: rgba(56, 189, 248, 0.2); color: #38bdf8; }
+        .badge.warning { background-color: rgba(249, 115, 22, 0.2); color: #fb923c; }
 
         @keyframes blink {
             0% { opacity: 0.4; }
@@ -126,7 +177,12 @@
     <main class="dashboard-grid">
         <div style="display: flex; flex-direction: column; gap: 25px;">
             <div class="card">
-                <h2><i class="fa-solid fa-shield-halved"></i> Live Security Status</h2>
+                <div class="card-header-row">
+                    <h2><i class="fa-solid fa-shield-halved"></i> Live Security Status</h2>
+                    <button id="securityActionBtn" class="action-btn" onclick="handleSecurityAction()">
+                        <i class="fa-solid fa-check"></i> <span id="securityBtnText">Noted</span>
+                    </button>
+                </div>
                 <div id="statusBox" class="status-box secure">
                     <p style="font-size: 13px; text-transform: uppercase; color: #64748b;">Current System State</p>
                     <div id="statusText" class="status-text" style="color: #22c55e;">SYSTEM SECURE</div>
@@ -138,6 +194,23 @@
                 <div class="status-box temp">
                     <p style="font-size: 13px; text-transform: uppercase; color: #64748b;">MPU6050 Sensor Telemetry</p>
                     <div id="tempText" class="status-text" style="color: #38bdf8;">--.- °C</div>
+                </div>
+                <div class="threshold-control">
+                    <label for="tempThreshold">Alert Log Threshold (°C):</label>
+                    <input type="number" id="tempThreshold" value="30.0" step="0.5">
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header-row">
+                    <h2><i class="fa-solid fa-smog"></i> Smoke and Possible Fire Detector</h2>
+                    <button id="smokeActionBtn" class="action-btn" onclick="handleSmokeAction()">
+                        <i class="fa-solid fa-check"></i> <span id="smokeBtnText">Noted</span>
+                    </button>
+                </div>
+                <div id="smokeBox" class="status-box smoke-clear">
+                    <p style="font-size: 13px; text-transform: uppercase; color: #64748b;">Air Quality Status</p>
+                    <div id="smokeText" class="status-text" style="color: #22c55e;">CLEAN AIR</div>
                 </div>
             </div>
 
@@ -178,7 +251,54 @@
 
         let bluetoothDevice = null;
         let inputBuffer = ""; 
-        let breachTimeout = null;
+        let securityState = "SECURE";
+        let smokeState = "CLEAN";
+        
+        // --- WEB AUDIO ALARM SYSTEM ---
+        let audioCtx = null;
+        let alarmInterval = null;
+
+        function updateAlarmState() {
+            // Sound the alarm if either system is currently alerting
+            if (securityState === "BREACH" || smokeState === "FIRE") {
+                startAlarmSound();
+            } else {
+                stopAlarmSound();
+            }
+        }
+
+        function startAlarmSound() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (alarmInterval) return;
+
+            alarmInterval = setInterval(() => {
+                if (!audioCtx) return;
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.25);
+                
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.25);
+            }, 400);
+        }
+
+        function stopAlarmSound() {
+            if (alarmInterval) {
+                clearInterval(alarmInterval);
+                alarmInterval = null;
+            }
+        }
 
         async function connectBluetooth() {
             const connectBtn = document.getElementById('connectBtn');
@@ -217,7 +337,6 @@
             }
         }
 
-        // Parse incoming streaming data packets
         function handleIncomingData(event) {
             const value = event.target.value;
             let decoder = new TextDecoder('utf-8');
@@ -231,7 +350,7 @@
                 let rawCommand = inputBuffer.substring(0, breakIdx);
                 inputBuffer = inputBuffer.substring(breakIdx + 1);
                 
-                let cleanCommand = rawCommand.trim().toLowerCase();
+                let cleanCommand = rawCommand.trim();
                 if (cleanCommand.length > 0) {
                     processHardwareCommand(cleanCommand);
                 }
@@ -239,34 +358,138 @@
         }
 
         function processHardwareCommand(command) {
+            const lowerCmd = command.toLowerCase();
             const statusBox = document.getElementById('statusBox');
             const statusText = document.getElementById('statusText');
+            const smokeBox = document.getElementById('smokeBox');
+            const smokeText = document.getElementById('smokeText');
             const tempText = document.getElementById('tempText');
+            
+            const securityActionBtn = document.getElementById('securityActionBtn');
+            const securityBtnText = document.getElementById('securityBtnText');
+            const smokeActionBtn = document.getElementById('smokeActionBtn');
+            const smokeBtnText = document.getElementById('smokeBtnText');
 
-            // 1. Process Impact / Breach Alert
-            if (command.includes("breach attempted")) {
+            // 1. Process Physical Breach Alert
+            if (lowerCmd.includes("breach attempted")) {
+                securityState = "BREACH";
                 statusBox.className = "status-box breach";
                 statusText.innerText = "⚠️ BREACH DETECTED";
                 statusText.style.color = "#ef4444";
                 
-                logEvent("Physical Impact Detected on MPU6050", "BREACH ALERT", "denied");
+                securityActionBtn.className = "action-btn";
+                securityBtnText.innerText = "Noted";
+                securityActionBtn.style.display = "flex";
 
-                // Auto reset status display after 3 seconds
-                if (breachTimeout) clearTimeout(breachTimeout);
-                breachTimeout = setTimeout(() => {
-                    statusBox.className = "status-box secure";
-                    statusText.innerText = "SYSTEM SECURE";
-                    statusText.style.color = "#22c55e";
-                }, 3000);
+                updateAlarmState();
+                logEvent("Physical Impact Detected on MPU6050", "BREACH ALERT", "denied");
             } 
-            // 2. Process Temperature Updates ("temp:24.5")
-            else if (command.startsWith("temp:")) {
+            // 2. Process Smoke & Fire Detection
+            else if (lowerCmd.includes("fire detected")) {
+                // Trigger alert if not already acknowledged or resolving
+                if (smokeState !== "DETERMINING") {
+                    smokeState = "FIRE";
+                    smokeBox.className = "status-box smoke-alert";
+                    smokeText.innerText = "🔥 FIRE DETECTED";
+                    smokeText.style.color = "#f97316";
+
+                    smokeActionBtn.className = "action-btn";
+                    smokeBtnText.innerText = "Noted";
+                    smokeActionBtn.style.display = "flex";
+
+                    updateAlarmState();
+                    logEvent("MQ-2 Sensor Detected Smoke/Fire Alert!", "POSSIBLE FIRE", "denied");
+                }
+            } 
+            else if (lowerCmd.includes("no fire")) {
+                // Auto restore clean state if not in manual acknowledgment flow
+                if (smokeState === "CLEAN") {
+                    smokeBox.className = "status-box smoke-clear";
+                    smokeText.innerText = "CLEAN AIR";
+                    smokeText.style.color = "#22c55e";
+                }
+            }
+            // 3. Process Temperature Updates ("temp:24.5")
+            else if (lowerCmd.startsWith("temp:")) {
                 let parts = command.split(":");
                 if (parts.length > 1) {
-                    let val = parseFloat(parts[1]).toFixed(1);
-                    tempText.innerText = `${val} °C`;
-                    logEvent(`Environmental Temperature Reading: ${val} °C`, "TELEMETRY", "info");
+                    let val = parseFloat(parts[1]);
+                    
+                    tempText.innerText = `${val.toFixed(1)} °C`;
+
+                    let thresholdVal = parseFloat(document.getElementById('tempThreshold').value);
+                    if (!isNaN(thresholdVal) && val > thresholdVal) {
+                        logEvent(`High Temp Alert: ${val.toFixed(1)} °C (Threshold: ${thresholdVal} °C)`, "TEMP ALERT", "warning");
+                    }
                 }
+            }
+        }
+
+        // Action handler for Security Breach Card
+        function handleSecurityAction() {
+            const statusBox = document.getElementById('statusBox');
+            const statusText = document.getElementById('statusText');
+            const securityActionBtn = document.getElementById('securityActionBtn');
+            const securityBtnText = document.getElementById('securityBtnText');
+
+            if (securityState === "BREACH") {
+                securityState = "DETERMINING";
+                updateAlarmState();
+
+                statusBox.className = "status-box determining";
+                statusText.innerText = "🔍 DETERMINING";
+                statusText.style.color = "#f59e0b";
+
+                securityActionBtn.className = "action-btn dealt";
+                securityBtnText.innerText = "Dealt with";
+
+                logEvent("Breach acknowledged. Security state: Determining", "IN PROGRESS", "info");
+
+            } else if (securityState === "DETERMINING") {
+                securityState = "SECURE";
+                updateAlarmState();
+
+                statusBox.className = "status-box secure";
+                statusText.innerText = "SYSTEM SECURE";
+                statusText.style.color = "#22c55e";
+
+                securityActionBtn.style.display = "none";
+
+                logEvent("Security incident resolved. System re-armed.", "RESOLVED", "allowed");
+            }
+        }
+
+        // Action handler for Smoke & Possible Fire Card
+        function handleSmokeAction() {
+            const smokeBox = document.getElementById('smokeBox');
+            const smokeText = document.getElementById('smokeText');
+            const smokeActionBtn = document.getElementById('smokeActionBtn');
+            const smokeBtnText = document.getElementById('smokeBtnText');
+
+            if (smokeState === "FIRE") {
+                smokeState = "DETERMINING";
+                updateAlarmState();
+
+                smokeBox.className = "status-box determining";
+                smokeText.innerText = "🔍 DETERMINING";
+                smokeText.style.color = "#f59e0b";
+
+                smokeActionBtn.className = "action-btn dealt";
+                smokeBtnText.innerText = "Dealt with";
+
+                logEvent("Smoke/Fire alert acknowledged. State: Determining", "IN PROGRESS", "info");
+
+            } else if (smokeState === "DETERMINING") {
+                smokeState = "CLEAN";
+                updateAlarmState();
+
+                smokeBox.className = "status-box smoke-clear";
+                smokeText.innerText = "CLEAN AIR";
+                smokeText.style.color = "#22c55e";
+
+                smokeActionBtn.style.display = "none";
+
+                logEvent("Smoke hazard resolved. Monitoring restored.", "RESOLVED", "allowed");
             }
         }
 
