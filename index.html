@@ -1,487 +1,288 @@
 <!DOCTYPE html>
-<html lang="en-us">
-  <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>GXC Game</title>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoGate Live Network Monitoring</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-      @-webkit-keyframes rotation {
-        from {
-          -webkit-transform: rotate(0deg);
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #0b0f17;
+            color: #e2e8f0;
+            font-family: 'Urbanist', sans-serif;
+            padding: 30px;
         }
 
-        to {
-          -webkit-transform: rotate(360deg);
-        }
-      }
-
-      @-moz-keyframes rotation {
-        from {
-          -moz-transform: rotate(0deg);
-        }
-
-        to {
-          -moz-transform: rotate(360deg);
-        }
-      }
-
-      @-o-keyframes rotation {
-        from {
-          -o-transform: rotate(0deg);
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 20px;
         }
 
-        to {
-          -o-transform: rotate(360deg);
+        h1 { font-size: 32px; color: #f8fafc; letter-spacing: -0.5px; }
+        h1 span { color: #bef264; }
+        
+        .header-actions { display: flex; gap: 15px; align-items: center; }
+        
+        .connect-btn {
+            background-color: #bef264;
+            color: #0f172a;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: opacity 0.2s;
         }
-      }
+        .connect-btn.connected { background-color: #22c55e; color: #fff; }
+        .connect-btn:hover { opacity: 0.9; }
 
-      @keyframes rotation {
-        from {
-          transform: rotate(0deg);
-        }
+        .network-status { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; background: #1e293b; padding: 8px 16px; border-radius: 20px;}
+        .dot { width: 10px; height: 10px; background-color: #64748b; border-radius: 50%; display: inline-block; }
+        .dot.active { background-color: #22c55e; animation: blink 1.5s infinite; }
 
-        to {
-          transform: rotate(360deg);
-        }
-      }
-
-      body {
-        font-family: arial;
-        margin: 0;
-        padding: 0;
-        min-height: 100vh;
-        min-width: 100vw;
-        background: radial-gradient(
-          56.63% 56.63% at 50% 43.37%,
-          #1c1726 0%,
-          #060612 100%
-        );
-      }
-
-      .emscripten {
-        padding-right: 0;
-        margin-left: auto;
-        margin-right: auto;
-        display: block;
-      }
-
-      div.emscripten {
-        text-align: center;
-      }
-
-      /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
-      canvas.emscripten {
-        display: none;
-        border: 0px none;
-        background-color: black;
-        position: relative;
-        transition: opacity 5s ease-in;
-        -webkit-transition: opacity 5s ease-in;
-        opacity: 0;
-        image-rendering: optimizeSpeed;             /* Older versions of FF          */
-        image-rendering: -moz-crisp-edges;          /* FF 6.0+                       */
-        image-rendering: -webkit-optimize-contrast; /* Safari                        */
-        image-rendering: -o-crisp-edges;            /* OS X & Windows Opera (12.02+) */
-        image-rendering: pixelated;                 /* Awesome future-browsers       */
-        -ms-interpolation-mode: nearest-neighbor;   /* IE                            */        
-      }
-
-      canvas.active {
-        animation-name: fadeIn;
-        animation-duration: 2s;
-        opacity: 1;
-      }
-      @keyframes fadeIn {
-        0% {
-          opacity: 0;
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 25px;
         }
 
-        100% {
-          opacity: 1;
+        .card {
+            background-color: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 16px;
+            padding: 25px;
         }
-      }
 
-      .spinner {
-        height: 30px;
-        width: 30px;
+        h2 { font-size: 18px; margin-bottom: 20px; color: #94a3b8; display: flex; align-items: center; gap: 10px; }
 
-        -webkit-animation: rotation 0.8s linear infinite;
-        -moz-animation: rotation 0.8s linear infinite;
-        -o-animation: rotation 0.8s linear infinite;
-        animation: rotation 0.8s linear infinite;
+        .status-box {
+            background-color: #1e293b;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+        .status-box.secure { border-left: 6px solid #22c55e; }
+        .status-box.breach { border-left: 6px solid #ef4444; background-color: rgba(239, 68, 68, 0.1); }
+        .status-box.temp { border-left: 6px solid #38bdf8; background-color: rgba(56, 189, 248, 0.05); }
 
-        border: 5px solid #bdff00;
-        border-top: 5px solid #719900;
-        border-radius: 100%;
-      }
+        .status-text { font-size: 28px; font-weight: 700; margin-top: 10px; }
 
-      #status {
-        display: inline-block;
-        vertical-align: top;
-        font-weight: bold;
-        color: white;
-      }
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .log-table th, .log-table td {
+            text-align: left;
+            padding: 14px;
+            border-bottom: 1px solid #1e293b;
+        }
+        .log-table th { color: #64748b; font-size: 13px; text-transform: uppercase; }
+        .badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .badge.allowed { background-color: rgba(34, 197, 94, 0.2); color: #4ade80; }
+        .badge.denied { background-color: rgba(239, 68, 68, 0.2); color: #f87171; }
+        .badge.neutral { background-color: rgba(148, 163, 184, 0.2); color: #cbd5e1; }
+        .badge.info { background-color: rgba(56, 189, 248, 0.2); color: #38bdf8; }
 
-      #progress {
-        width: 250px;
-        height: 10px;
-        -webkit-appearance: none;
-        appearance: none;
-        padding: 5px;
-      }
-
-      /* Determines the style of the background of the progress bar */
-      progress[value]::-webkit-progress-bar {
-        background-color: #8492a6;
-        height: 10px;
-        border-radius: 15px;
-      }
-      /* Determines the style of the completed part of the progress bar */
-      progress[value]::-webkit-progress-value {
-        background-image: -webkit-linear-gradient(left, #719900, #bdff00);
-        height: 10px;
-        border-radius: 15px;
-      }
-
-      div.loading {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        pointer-events: none;
-      }
-      div.loading > * {
-        padding: 10px;
-        margin: 10px;
-      }
+        @keyframes blink {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
     </style>
-  </head>
+</head>
+<body>
 
-  <body>
-    <canvas
-      class="emscripten"
-      id="canvas"
-      oncontextmenu="event.preventDefault()"
-      tabindex="-1"
-    >
-    </canvas>
-    <div class="loading">
-      <div class="spinner" id="spinner"></div>
-      <div class="emscripten" id="status">Downloading...</div>
+    <header>
+        <h1>EcoGate<span>.Network</span></h1>
+        <div class="header-actions">
+            <button id="connectBtn" class="connect-btn" onclick="connectBluetooth()">
+                <i class="fa-solid fa-bluetooth"></i> Connect EcoGate Hardware
+            </button>
+            <div class="network-status">
+                <span id="statusDot" class="dot"></span> <span id="gatewayText">Hardware Offline</span>
+            </div>
+        </div>
+    </header>
 
-      <progress value="0" max="100" id="progress" hidden="1"></progress>
-    </div>
+    <main class="dashboard-grid">
+        <div style="display: flex; flex-direction: column; gap: 25px;">
+            <div class="card">
+                <h2><i class="fa-solid fa-shield-halved"></i> Live Security Status</h2>
+                <div id="statusBox" class="status-box secure">
+                    <p style="font-size: 13px; text-transform: uppercase; color: #64748b;">Current System State</p>
+                    <div id="statusText" class="status-text" style="color: #22c55e;">SYSTEM SECURE</div>
+                </div>
+            </div>
 
-   <script async
-     data-ad-client="ca-pub-123"
-     data-ad-frequency-hint="30s"
-     data-adbreak-test="on"
-     src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js">
-   </script>
- 
-   <script>
-     window.adsbygoogle = window.adsbygoogle || [];
-     const adBreak =  adConfig = function(o) {adsbygoogle.push(o);}
-   </script>
+            <div class="card">
+                <h2><i class="fa-solid fa-temperature-half"></i> Ambient Temperature</h2>
+                <div class="status-box temp">
+                    <p style="font-size: 13px; text-transform: uppercase; color: #64748b;">MPU6050 Sensor Telemetry</p>
+                    <div id="tempText" class="status-text" style="color: #38bdf8;">--.- °C</div>
+                </div>
+            </div>
 
-    <script type="text/javascript">
-      const CHANGE_ASPECT_RATIO = true;
+            <div class="card">
+                <h2><i class="fa-solid fa-terminal"></i> Serial Data Stream</h2>
+                <p style="font-size: 12px; color: #94a3b8; font-family: monospace; background: #070a12; padding: 12px; border-radius: 8px; max-height: 100px; overflow-y: auto;" id="debugOut">
+                    [System Status] Click 'Connect EcoGate Hardware' to connect via Bluetooth.
+                </p>
+            </div>
+        </div>
 
-      var statusElement = document.getElementById("status");
-      var progressElement = document.getElementById("progress");
-      var spinnerElement = document.getElementById("spinner");
-      var canvasElement = document.getElementById("canvas");
+        <div class="card">
+            <h2><i class="fa-solid fa-list-timeline"></i> System Logs & Telemetry</h2>
+            <table class="log-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Device Node</th>
+                        <th>Event Description</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="logBody">
+                    <tr>
+                        <td>--:--:--</td>
+                        <td>EcoGate_Node_01</td>
+                        <td>Awaiting Bluetooth Connection...</td>
+                        <td><span class="badge neutral">STANDBY</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
 
-      var startingHeight, startingWidth;
-      var startingAspect;
-      var Module = {
-        preRun: [],
-        postRun: [],
-        print: (function () {
-          var element = document.getElementById("output");
-          if (element) element.value = ""; // clear browser cache
-          return function (text) {
-            if (arguments.length > 1)
-              text = Array.prototype.slice.call(arguments).join(" ");
-            // These replacements are necessary if you render to raw HTML
-            //text = text.replace(/&/g, "&amp;");
-            //text = text.replace(/</g, "&lt;");
-            //text = text.replace(/>/g, "&gt;");
-            //text = text.replace('\n', '<br>', 'g');
-            console.log(text);
-            if (text === "Entering main loop.") {
-              // It seems that this text ensures game is loaded.
-              ensureAspectRatio();
+    <script>
+        const UART_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+        const TX_CHARACTERISTIC_UUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+
+        let bluetoothDevice = null;
+        let inputBuffer = ""; 
+        let breachTimeout = null;
+
+        async function connectBluetooth() {
+            const connectBtn = document.getElementById('connectBtn');
+            const statusDot = document.getElementById('statusDot');
+            const gatewayText = document.getElementById('gatewayText');
+
+            try {
+                gatewayText.innerText = "Searching...";
+                
+                bluetoothDevice = await navigator.bluetooth.requestDevice({
+                    filters: [{ name: 'EcoGate_Node_01' }],
+                    optionalServices: [UART_SERVICE_UUID]
+                });
+
+                gatewayText.innerText = "Connecting...";
+
+                const server = await bluetoothDevice.gatt.connect();
+                const service = await server.getPrimaryService(UART_SERVICE_UUID);
+                const characteristic = await service.getCharacteristic(TX_CHARACTERISTIC_UUID);
+
+                await characteristic.startNotifications();
+                characteristic.addEventListener('characteristicvaluechanged', handleIncomingData);
+
+                connectBtn.className = "connect-btn connected";
+                connectBtn.innerHTML = `<i class="fa-solid fa-circle-check"></i> Paired with EcoGate`;
+                statusDot.className = "dot active";
+                gatewayText.innerText = "IoT Gateway: Online";
+                
+                logEvent("Bluetooth Connection Established", "SYSTEM ONLINE", "allowed");
+
+            } catch (error) {
+                console.error("Bluetooth Error:", error);
+                gatewayText.innerText = "Connection Failed";
+                statusDot.className = "dot";
+                document.getElementById('debugOut').innerText = `[Error]: ${error.message || error}`;
             }
-            if (element) {
-              element.value += text + "\n";
-              element.scrollTop = element.scrollHeight; // focus on bottom
+        }
+
+        // Parse incoming streaming data packets
+        function handleIncomingData(event) {
+            const value = event.target.value;
+            let decoder = new TextDecoder('utf-8');
+            let chunk = decoder.decode(value);
+            
+            inputBuffer += chunk;
+            document.getElementById('debugOut').innerText = `[Stream]: ${inputBuffer.replace(/\n/g, ' \\n ')}`;
+
+            while (inputBuffer.includes('\n') || inputBuffer.includes('\r')) {
+                let breakIdx = inputBuffer.search(/[\r\n]/);
+                let rawCommand = inputBuffer.substring(0, breakIdx);
+                inputBuffer = inputBuffer.substring(breakIdx + 1);
+                
+                let cleanCommand = rawCommand.trim().toLowerCase();
+                if (cleanCommand.length > 0) {
+                    processHardwareCommand(cleanCommand);
+                }
             }
-          };
-        })(),
-        printErr: function (text) {
-          if (arguments.length > 1)
-            text = Array.prototype.slice.call(arguments).join(" ");
-          console.error(text);
-        },
-        canvas: (function () {
-          var canvas = document.getElementById("canvas");
+        }
 
-          // As a default initial behavior, pop up an alert when webgl context is lost. To make your
-          // application robust, you may want to override this behavior before shipping!
-          // See http://www.khronos.org/registry/webgl/specs/latest/1.0/#5.15.2
-          canvas.addEventListener(
-            "webglcontextlost",
-            function (e) {
-              alert("WebGL context lost. You will need to reload the page.");
-              e.preventDefault();
-            },
-            false
-          );
+        function processHardwareCommand(command) {
+            const statusBox = document.getElementById('statusBox');
+            const statusText = document.getElementById('statusText');
+            const tempText = document.getElementById('tempText');
 
-          return canvas;
-        })(),
-        setStatus: function (text) {
-          if (!Module.setStatus.last)
-            Module.setStatus.last = { time: Date.now(), text: "" };
-          if (text === Module.setStatus.last.text) return;
-          var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
-          var now = Date.now();
-          if (m && now - Module.setStatus.last.time < 30) return; // if this is a progress update, skip it if too soon
-          Module.setStatus.last.time = now;
-          Module.setStatus.last.text = text;
-          if (m) {
-            text = m[1];
-            progressElement.value = parseInt(m[2]) * 100;
-            progressElement.max = parseInt(m[4]) * 100;
-            progressElement.hidden = false;
-            spinnerElement.hidden = false;
-          } else {
-            progressElement.value = null;
-            progressElement.max = null;
-            progressElement.hidden = true;
+            // 1. Process Impact / Breach Alert
+            if (command.includes("breach attempted")) {
+                statusBox.className = "status-box breach";
+                statusText.innerText = "⚠️ BREACH DETECTED";
+                statusText.style.color = "#ef4444";
+                
+                logEvent("Physical Impact Detected on MPU6050", "BREACH ALERT", "denied");
 
-            // If there are no status text, we are finished and can display
-            // the canvas and hide the spinner
-            if (!text) {
-              spinnerElement.style.display = "none";
-              canvasElement.style.display = "block";
+                // Auto reset status display after 3 seconds
+                if (breachTimeout) clearTimeout(breachTimeout);
+                breachTimeout = setTimeout(() => {
+                    statusBox.className = "status-box secure";
+                    statusText.innerText = "SYSTEM SECURE";
+                    statusText.style.color = "#22c55e";
+                }, 3000);
+            } 
+            // 2. Process Temperature Updates ("temp:24.5")
+            else if (command.startsWith("temp:")) {
+                let parts = command.split(":");
+                if (parts.length > 1) {
+                    let val = parseFloat(parts[1]).toFixed(1);
+                    tempText.innerText = `${val} °C`;
+                    logEvent(`Environmental Temperature Reading: ${val} °C`, "TELEMETRY", "info");
+                }
             }
-          }
-          statusElement.innerHTML = text;
-        },
-        totalDependencies: 0,
-        monitorRunDependencies: function (left) {
-          this.totalDependencies = Math.max(this.totalDependencies, left);
-          Module.setStatus(
-            left
-              ? "Preparing... (" +
-                  (this.totalDependencies - left) +
-                  "/" +
-                  this.totalDependencies +
-                  ")"
-              : "All downloads complete."
-          );
-        },
-      };
-      Module.setStatus("Downloading...");
-      window.onerror = function (event) {
-        // TODO: do not warn on ok events like simulating an infinite loop or exitStatus
-        Module.setStatus("Exception thrown, see JavaScript console");
-        spinnerElement.style.display = "none";
-        Module.setStatus = function (text) {
-          if (text) Module.printErr("[post-exception status] " + text);
-        };
-      };
-
-      // Route URL GET parameters to argc+argv
-      if (typeof window === "object") {
-        Module['arguments'] = window.location.search.substr(1).trim().split('&');
-        // If no args were passed arguments = [''], in which case kill the single empty string.
-        if (!Module['arguments'][0]) {
-          Module['arguments'] = [];
-        }
-      }
-
-      var g_pAddAsyncMethod = -1;
-
-      function setAddAsyncMethod( asyncMethod )
-      {
-        g_pAddAsyncMethod = asyncMethod;
-      }
-
-      var g_pJSExceptionHandler = undefined;
-
-      function setJSExceptionHandler( exceptionHandler )
-      {
-        if (typeof exceptionHandler == "function") {
-            g_pJSExceptionHandler = exceptionHandler;
-        } // end if
-      } // end setJSExceptionHandler
-
-      function hasJSExceptionHandler()
-      {
-        return (g_pJSExceptionHandler != undefined) && (typeof g_pJSExceptionHandler == "function");
-      } // end hasJSExceptionHandler
-
-      function doJSExceptionHandler( exceptionJSON )
-      {
-        if (typeof g_pJSExceptionHandler == "function") {
-          var exception = JSON.parse( exceptionJSON );
-          g_pJSExceptionHandler( exception );
-        } // end if
-      } // end doJSExceptionHandler
-
-      function manifestFiles()
-      {
-        return [ ${runnerFilesAsArray} ].join( ";");
-      }
-
-      function onFirstFrameRendered()
-      {
-          //console.log("First frame rendered!");          
-      }
-
-      function onGameSetWindowSize(width,height)
-      {
-          //console.log("Game set target window size to width:" + width + ", height:" + height);
-      }
-
-    function triggerAd(adId, _callback_beforeAd, _callback_afterAd, _callback_adDismissed, _callback_adViewed, _callback_adbreakDone) {
-       // need to take a copy of the RValues represented
-       var pRValueCopy = triggerAdPrefix( _callback_beforeAd, _callback_afterAd, _callback_adDismissed, _callback_adViewed, _callback_adbreakDone );
-       var pCallbackBeforeAd = pRValueCopy + (0*16);
-       var pCallbackAfterAd = pRValueCopy + (1*16);
-       var pCallbackAdDismissed = pRValueCopy + (2*16);
-       var pCallbackAdViewed = pRValueCopy + (3*16);
-       var pCallbackAdBreakDone = pRValueCopy + (4*16);
-
-       adBreak({
-         "type": "reward",                    // The type of this placement
-         "name": adId,                        // A descriptive name for this placement
-
-         "beforeAd": () => {                  // Prepare for the ad. Mute and pause the game flow
-           console.log("beforeAd");
-           // trigger _callback_beforeAd to game
-           doGMLCallback( pCallbackBeforeAd, { id:adId } );
-         },
-         "afterAd" : () => {                   // Resume the game and re-enable sound
-           console.log("afterAd");
-           // trigger _callback_afterAd to game
-           doGMLCallback( pCallbackAfterAd, { id:adId } );
-         },
-         "beforeReward": (showAdFn) => {      // Show reward prompt (call showAdFn() if clicked)
-           console.log("beforeReward");
-           showAdFn();
-           // Setup native prompt to indicate ad will load
-           // Will not be setup by dev so this UX controlled by GXC
-         },
-         "adDismissed": () => {               // Player dismissed the ad before it finished
-           console.log("adDismissed");
-           // trigger _callback_adDismissed to game
-           doGMLCallback( pCallbackAdDismissed, { id:adId } );
-         },
-         "adViewed": () => {                  // Player watched the ad–give them the reward.
-           console.log("adViewed");
-           // trigger _callback_adViewed to game
-           doGMLCallback( pCallbackAdViewed, { id:adId } );
-         },
-         "adBreakDone": (placementInfo) => {  // Always called (if provided) even if an ad didn't show
-           console.log("adBreakDone");
-           // trigger _callback_adBreakDone to game
-           doGMLCallback( pCallbackAdBreakDone, { id:adId } );
-           triggerAdPostfix( pRValueCopy );
-         }, 
-       });
-      }
-
-      function triggerPayment(itemId, _callback_PaymentComplete) {
-        var pRValueCopy = triggerPaymentPrefix(_callback_PaymentComplete);
-        setTimeout(() => {
-          console.log("triggerPayment");
-          doGMLCallback(pRValueCopy, { id:itemId });        
-        }, 1000);
-        triggerPaymentPostfix();
-      }
-
-      function ensureAspectRatio() {
-        if(canvasElement===undefined) {
-          return 
-        } 
-
-        canvasElement.className = canvasElement.className.includes("active")
-          ? canvasElement.className
-          : canvasElement.className + " active";
-        if (!CHANGE_ASPECT_RATIO) {
-          return;
         }
 
-        
-        /* NOTE(robertz): The default canvas sizes while loading are 300x150,
-        * let us not use those values. eventually, there will most likely be a 
-         * game of that dimension, so this should be removed
-         */
-        if (canvasElement.height === 150 && canvasElement.width === 300) {
-          return;
+        function logEvent(description, outcomeText, badgeStyle) {
+            const logBody = document.getElementById('logBody');
+            const now = new Date().toLocaleTimeString();
+            let newRow = document.createElement('tr');
+            
+            newRow.innerHTML = `
+                <td>${now}</td>
+                <td>EcoGate_Node_01</td>
+                <td>${description}</td>
+                <td><span class="badge ${badgeStyle}">${outcomeText}</span></td>
+            `;
+            logBody.insertBefore(newRow, logBody.firstChild);
         }
-        
-        if (startingHeight === undefined && startingWidth === undefined) {
-          startingHeight = canvasElement.height;
-          startingWidth = canvasElement.width;
-          startingAspect = startingWidth / startingHeight;
-        }
-        
-        const maxWidth = window.innerWidth;
-        const maxHeight = window.innerHeight;
-        var newHeight, newWidth;
-
-        // Find the limiting dimension.
-        var heightQuotient = startingHeight / maxHeight;
-        var widthQuotient = startingWidth / maxWidth;
-        
-        if (heightQuotient > widthQuotient) {          
-          // Max out on height.
-          newHeight = maxHeight;
-          newWidth = newHeight * startingAspect;
-        } else {          
-          // Max out on width.
-          newWidth = maxWidth;
-          newHeight = newWidth / startingAspect;
-        }
-
-        canvasElement.style.height = newHeight + "px";
-        canvasElement.style.width = newWidth + "px";
-      
-    }
-
-      /* Observe the dimensions of body and ensureAspectRatio of the canvas (whilst taking up maximum space)
-       *
-       * NOTE(robertz):
-       *  We also need to request an Animation Frame to do this, if we do not, resizeObserver might throw error
-       *  "ResizeObserver loop limit exceeded", which means that 
-       *  "[...] ResizeObserver was not able to deliver all observations within a single animation frame"
-       *  https://stackoverflow.com/a/50387233 (source).
-       *  
-       *  There are different ways to solve the issue, since the error is benign (meaning it wont crash anything)
-       *  we could choose to ignore it via changing the window.onerror method, i.e
-       *  ```
-       *  window.onerror((event)=> {
-       *    if(event==="ResizeObserver loop limit exceeded") {
-       *       return
-       *    }
-       *     ///...rest
-       *  }
-       *  ```
-       *  But for now we request an animationFrame which seems to be the recommended way to go about it.
-       */
-      const resizeObserver = new ResizeObserver(() => window.requestAnimationFrame(ensureAspectRatio));
-      resizeObserver.observe(document.body);
     </script>
-    <script async type="text/javascript" src="runner-sw.js"></script>
-  </body>
+</body>
 </html>
